@@ -2,3 +2,5 @@ decodeflac.py
 *.flac
 *.wav
 *.out
+.DS_Store
+.vscode/*
