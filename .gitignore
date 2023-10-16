@@ -1,0 +1,4 @@
+decodeflac.py
+*.flac
+*.wav
+*.out
