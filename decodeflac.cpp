@@ -47,35 +47,47 @@ std::string capitalize(const std::string& s) {
 
 void decode_file(std::ifstream& input, std::ofstream* output) {
 	BitInput inp = BitInput(input);
+	
 	uint64_t header = inp.read_uint(32);
+	
 	if (header != 0x664C6143) {
 		std::cerr << "Invalid magic string" << std::endl;
 	}
+
+
 	uint8_t type;
+
 	size_t length;
+
 	uint32_t samplerate = -1;
 	uint16_t numchannels;
 	uint16_t sampledepth;
 	uint64_t numsamples;
 
-	uint64_t vendor_length = 0;
-	uint64_t comment_length = 0;
+
+	size_t vendor_length = 0;
+	size_t comment_length = 0;
+	size_t user_comment_list_length = 0;
+
 	std::string vendor_string = "";
 	std::string comment_string = "";
-	uint64_t user_comment_list_length;
-	std::vector<std::string> user_comment_list;
+	std::vector<std::string> user_comment_list = {};
+
 
 	uint64_t picture_type;
-	uint64_t mime_length = 0;
-	std::string mime_string = "No_Mime";
-	uint64_t desc_length = 0;
-	std::string desc_string = "No_Desc";
-	uint64_t width = 0;
-	uint64_t height = 0;
 	uint64_t depth = 0;
 	uint64_t channels = 0;
-	uint64_t data_length = 0;
+
+	size_t mime_length = 0;
+	size_t desc_length = 0;
+	size_t width = 0;
+	size_t height = 0;
+	size_t data_length = 0;
+
+	std::string mime_string = "No_Mime";
+	std::string desc_string = "No_Desc";
 	std::string data_string = ""; // Data -> TODO : Binary
+	
 
 	char charbuffer;
 
@@ -101,7 +113,7 @@ void decode_file(std::ifstream& input, std::ofstream* output) {
 		} else if (type == 4) {																					// METADATA_BLOCK_VORBIS_COMMENT
 			vendor_length = __builtin_bswap32(inp.read_uint(32)); // /!\ little-endian reverse
 			vendor_string.clear();
-			for (uint64_t i = 0; i < vendor_length; ++i) {
+			for (size_t i = 0; i < vendor_length; ++i) {
 				// Read UTF-8 characters
 				charbuffer = static_cast<char>(inp.read_uint(8));
 				vendor_string.push_back(charbuffer);
@@ -110,10 +122,10 @@ void decode_file(std::ifstream& input, std::ofstream* output) {
 			user_comment_list_length = __builtin_bswap32(inp.read_uint(32));
 			user_comment_list = std::vector<std::string>(user_comment_list_length,"");
 			
-			for (uint64_t i = 0; i < user_comment_list_length; ++i) {
+			for (size_t i = 0; i < user_comment_list_length; ++i) {
 				comment_length = __builtin_bswap32(inp.read_uint(32));
 				comment_string.clear();
-				for (uint64_t j = 0; j < comment_length; ++j) {
+				for (size_t j = 0; j < comment_length; ++j) {
 					// Read UTF-8 characters
 					charbuffer = static_cast<char>(inp.read_uint(8));
 					comment_string.push_back(charbuffer);
@@ -124,14 +136,14 @@ void decode_file(std::ifstream& input, std::ofstream* output) {
 			picture_type = inp.read_uint(32);
 			mime_length = inp.read_uint(32);
 			mime_string.clear();
-			for (uint64_t i = 0; i < mime_length; ++i) {
+			for (size_t i = 0; i < mime_length; ++i) {
 				// Read UTF-8 characters
 				charbuffer = static_cast<char>(inp.read_uint(8));
 				mime_string.push_back(charbuffer);
 			}
 			desc_length = inp.read_uint(32);
 			desc_string.clear();
-			for (uint64_t i = 0; i < desc_length; ++i) {
+			for (size_t i = 0; i < desc_length; ++i) {
 				// Read UTF-8 characters
 				charbuffer = static_cast<char>(inp.read_uint(8));
 				desc_string.push_back(charbuffer);
@@ -142,7 +154,7 @@ void decode_file(std::ifstream& input, std::ofstream* output) {
 			channels = inp.read_uint(32);
 			data_length =  inp.read_uint(32);
 			data_string.clear();
-			for (uint64_t i = 0; i < data_length; ++i) {
+			for (size_t i = 0; i < data_length; ++i) {
 				// Read UTF-8 characters
 				charbuffer = static_cast<char>(inp.read_uint(8));
 				data_string.push_back(charbuffer);
