@@ -11,6 +11,7 @@ add_executable(
     BitInput/bitinput.cpp
     Bloc/bloc.cpp
     Bloc/Metadata/metadata.cpp
+    Bloc/Vorbis/vorbis.cpp
 )
 
 target_compile_features(${project_name} PUBLIC cxx_std_17)
