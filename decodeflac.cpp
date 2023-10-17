@@ -6,35 +6,10 @@
 
 #include <algorithm>
 
-class BitInput {
-public:
-	BitInput(std::ifstream& input) : m_input (input) {
-		m_bitbuffer = 0;
-		m_bufferlen = 0;
-	}
-	uint64_t read_uint(size_t n) {
-		int tmp;
-		while (m_bufferlen < n) {
-			this->m_input.read((char *)&tmp,1);
-			if (sizeof(tmp) == 0) {
-				std::cerr << "EOF error" << std::endl;
-			}
-			// On ajoute tmp au buffer
-			this->m_bitbuffer = (this->m_bitbuffer << 8) | tmp;
-			// On incrémente la taille du buffer
-			this->m_bufferlen += 8;
-		}
-		this->m_bufferlen -= n;
-		uint64_t result = (this->m_bitbuffer >> this->m_bufferlen) & ((static_cast<uint64_t>(1) << n) - 1);
-		// Clear buffer
-		this->m_bitbuffer &= (1 << this->m_bufferlen) - 1;
-		return result;
-	}
-private:
-	std::ifstream& m_input;
-	long long unsigned int m_bitbuffer;
-	size_t m_bufferlen;
-};
+#include "BitInput/bitinput.hpp"
+
+#include "Bloc/bloc.hpp"
+#include "Bloc/Metadata/metadata.hpp"
 
 std::string capitalize(const std::string& s) {
 	std::string sout = s;
@@ -212,6 +187,76 @@ void decode_file(std::ifstream& input, std::ofstream* output) {
 	std::cout << std::endl;
 }
 
+class Picture {
+public:
+	Picture() {
+		depth = 0;
+		channels = 0;
+
+		mime_length = 0;
+		desc_length = 0;
+		width = 0;
+		height = 0;
+		data_length = 0;
+
+		mime_string = "No_Mime";
+		desc_string = "No_Desc";
+		data_string = "No_Data";
+	}
+	void print_info() {
+		std::cout << std::endl;
+		std::cout << "Image infos :" << std::endl;
+		std::cout << "    - Type      : " << type << std::endl;
+		std::cout << "    - Mime      : " << mime_string << std::endl;
+		std::cout << "    - Desc      : " << desc_string << std::endl;
+		std::cout << "    - Width     : " << width << std::endl;
+		std::cout << "    - Height    : " << height << std::endl;
+		std::cout << "    - Depth     : " << depth << std::endl;
+		std::cout << "    - Channel   : " << channels << std::endl;
+		std::cout << "    - Data size : " << data_length << std::endl;
+		std::cout << std::endl;
+	}
+public:
+	uint64_t type;
+	uint64_t depth;
+	uint64_t channels;
+
+	size_t mime_length;
+	size_t desc_length;
+	size_t width;
+	size_t height;
+	size_t data_length;
+
+	std::string mime_string;
+	std::string desc_string;
+	std::string data_string; // Data -> TODO : Binary
+private:
+};
+
+void read_flac(std::ifstream& input) {
+	std::shared_ptr<BitInput> inp = std::make_shared<BitInput>(input);
+
+	uint64_t header = inp->read_uint(32);
+
+	if (header != 0x664C6143) {
+		std::cerr << "Invalid magic string" << std::endl;
+	}
+
+	MetadataBloc metadata = MetadataBloc(inp);
+	metadata.read_metadata();
+	metadata.print_metadata();
+
+	Bloc vorbis = Bloc(inp);
+	vorbis.read_header();
+	vorbis.print_info();
+	vorbis.read_body();
+
+	Bloc padding = Bloc(inp);
+	padding.read_header();
+	padding.print_info();
+	padding.read_body();
+}
+
 int main(int argc, char** argv) {
 	std::cout << "Usage : " << argv[0] << " input.flac " << " output.wav" << std::endl;
 	std::filesystem::path pwd = std::filesystem::current_path();
@@ -232,7 +277,10 @@ int main(int argc, char** argv) {
 		std::ifstream input(pwd.string() + "/" + argv[1], std::ios::binary);
 		std::ofstream output(pwd.string() + "/out.wav" , std::ios::binary);
 
-		decode_file(input,&output);
+		std::cout << std::endl;
+
+		//decode_file(input,&output);
+		read_flac(input);
 	}
 	return 0;
 }

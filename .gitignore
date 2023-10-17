@@ -4,3 +4,5 @@ decodeflac.py
 *.out
 .DS_Store
 .vscode/*
+build
+*.jpg
