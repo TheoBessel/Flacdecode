@@ -24,6 +24,15 @@ void read_flac(std::ifstream& input) {
 		std::cerr << "Invalid magic string" << std::endl;
 	}
 
+	/**
+	 * TODO : create a constructor for sub_blocs
+	 * 		It must take a shared_ptr<Block> as entry
+	 * 		and initialize the sub_bloc with this bloc.
+	 * 	
+	 * 		See how to chose a sub_bloc class depending
+	 * 		on its type.
+	*/
+
 	MetadataBloc metadata = MetadataBloc(inp);
 	metadata.read_metadata();
 	metadata.print_metadata();

@@ -9,6 +9,7 @@ public:
     void read_image();
     void print_image();
     const uint8_t TYPE = 6;
+    using Bloc::is_last;
 private:
     uint64_t m_picture_type;
 

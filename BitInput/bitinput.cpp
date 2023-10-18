@@ -5,7 +5,7 @@ BitInput::BitInput(std::ifstream& input) : m_input (input), m_bitbuffer (0), m_b
 	read_state = std::make_shared<std::streampos>(m_input.tellg());
 }
 
-uint64_t BitInput::read_uint(size_t n) {
+uint64_t BitInput::read_uint(size_t n, bool update_state) {
 	// Get read_state
 	m_input.seekg(*read_state);
 	//std::cout << "[Read state] : " << (*read_state) << std::endl;
@@ -18,7 +18,9 @@ uint64_t BitInput::read_uint(size_t n) {
 		// Increment buffer length
 		m_bufferlen += 8;
 		// Save read_state
-		(*read_state) = (*read_state) + static_cast<std::streampos>(1);
+		if (update_state) {
+			(*read_state) = (*read_state) + static_cast<std::streampos>(1);
+		}
 	}
     // Clear length buffer
     m_bufferlen -= n;

@@ -5,6 +5,7 @@
 
 class MetadataBloc : private Bloc {
 using Bloc::Bloc;
+using Bloc::is_last;
 public:
     void read_metadata();
     void print_metadata();

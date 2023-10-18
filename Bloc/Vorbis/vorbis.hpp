@@ -5,6 +5,7 @@
 
 class VorbisBloc : private Bloc {
 using Bloc::Bloc;
+using Bloc::is_last;
 public:
     void read_vorbis();
     void print_vorbis();

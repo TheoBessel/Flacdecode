@@ -34,7 +34,10 @@ void VorbisBloc::print_vorbis() {
 		comment_head = comment.substr(0, comment.find('='));
 		comment_tail = comment.substr(comment.find('=')+1, comment.length()-1);
 		comment_head = capitalize(comment_head);
-		std::cout << "        - " << std::setw(12) << std::left << std::setfill(' ') << comment_head << ": " << comment_tail << std::endl;
+		if (comment_head == "Tracknumber") {
+			comment_head = "Track";
+		}
+		std::cout << "        - " << std::setw(8) << std::left << std::setfill(' ') << comment_head << ": " << comment_tail << std::endl;
 	}
 	std::cout << std::endl;
 }
