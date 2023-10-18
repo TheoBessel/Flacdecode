@@ -8,6 +8,7 @@ using Bloc::Bloc;
 public:
     void read_metadata();
     void print_metadata();
+    const uint8_t TYPE = 0;
 private:
     uint64_t m_samplerate = -1;
 	uint64_t m_numchannels = -1;

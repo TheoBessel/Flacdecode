@@ -11,6 +11,9 @@
 #include "Bloc/bloc.hpp"
 #include "Bloc/Metadata/metadata.hpp"
 #include "Bloc/Vorbis/vorbis.hpp"
+#include "Bloc/Image/image.hpp"
+
+#include "Frame/frame.hpp"
 
 void read_flac(std::ifstream& input) {
 	std::shared_ptr<BitInput> inp = std::make_shared<BitInput>(input);
@@ -29,10 +32,20 @@ void read_flac(std::ifstream& input) {
 	vorbis.read_vorbis();
 	vorbis.print_vorbis();
 
+	ImageBloc image = ImageBloc(inp);
+	image.read_image();
+	image.print_image();
+
 	Bloc padding = Bloc(inp);
-	padding.read_header();
-	padding.print_info();
-	padding.read_body();
+	while (!padding.is_last()) {
+		padding.read_header();
+		padding.print_info();
+		padding.read_body();
+	}
+	
+	Frame frame = Frame(inp);
+	frame.read_header();
+	frame.print_info();
 }
 
 int main(int argc, char** argv) {

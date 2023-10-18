@@ -2,7 +2,7 @@
 
 void MetadataBloc::read_metadata() {
     this->read_header();
-    assert(this->m_type == 0);
+    assert(this->m_type == TYPE);
     // Skip size informations
     this->m_inp->read_uint(80); // 16 + 16 + 24 + 24
     // Get codec informations

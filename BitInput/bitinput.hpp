@@ -9,7 +9,7 @@ class BitInput {
 public:
 	BitInput(std::ifstream& input);
 	uint64_t read_uint(size_t n);
-public:
+private:
     std::shared_ptr<std::streampos> read_state; // Public because of read_stream
 private:
 	std::ifstream& m_input;

@@ -12,6 +12,8 @@ add_executable(
     Bloc/bloc.cpp
     Bloc/Metadata/metadata.cpp
     Bloc/Vorbis/vorbis.cpp
+    Bloc/Image/image.cpp
+    Frame/frame.cpp
 )
 
 target_compile_features(${project_name} PUBLIC cxx_std_17)

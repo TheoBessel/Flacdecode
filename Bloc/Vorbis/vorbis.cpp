@@ -1,15 +1,21 @@
 #include "vorbis.hpp"
+#include "../../Utils/utils.hpp"
 
 void VorbisBloc::read_vorbis() {
     this->read_header();
-    assert(this->m_type == 4);
+    assert(this->m_type == TYPE);
     // Get vendor length
-    m_vendor_length = this->read_size(32, true);
+    m_vendor_length = this->read_size(32, Order::LITTLE_ENDIAN_ORDER);
+	// Get vendor string
     m_vendor_string = this->read_string(m_vendor_length);
-    m_user_comment_list_length = this->read_size(32, true);
+	// Get comment list length
+    m_user_comment_list_length = this->read_size(32, Order::LITTLE_ENDIAN_ORDER);
     for (uint64_t i = 0; i < m_user_comment_list_length; i++) {
-        m_comment_length = this->read_size(32, true);
+		// Get comment length
+        m_comment_length = this->read_size(32, Order::LITTLE_ENDIAN_ORDER);
+		// Get comment string
         m_comment_string = this->read_string(m_comment_length);
+		// Push comment to list
         m_user_comment_list.push_back(m_comment_string);
     }
 }
@@ -31,15 +37,4 @@ void VorbisBloc::print_vorbis() {
 		std::cout << "        - " << std::setw(12) << std::left << std::setfill(' ') << comment_head << ": " << comment_tail << std::endl;
 	}
 	std::cout << std::endl;
-}
-
-std::string VorbisBloc::read_string(uint64_t length) {
-    std::string buffer = "";
-    char charbuffer = ' ';
-	for (uint64_t i = 0; i < length; ++i) {
-		// Read UTF-8 characters
-		charbuffer = static_cast<char>(this->m_inp->read_uint(8));
-		buffer.push_back(charbuffer);
-	}
-    return buffer;
 }

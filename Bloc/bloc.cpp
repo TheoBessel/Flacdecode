@@ -1,13 +1,10 @@
 #include "bloc.hpp"
-#include <iostream>
 
-Bloc::Bloc(std::shared_ptr<BitInput> inp) : m_inp (inp), m_last (false), m_type (0), m_length (0) {}
-
-bool Bloc::is_valid() {
-    uint64_t header = m_inp->read_uint(32);
-    bool valid = (header == static_cast<uint64_t>(1716281667));
-    return valid;
-}
+Bloc::Bloc(std::shared_ptr<BitInput> inp) : 
+    m_inp (inp), 
+    m_last (false), 
+    m_type (0), 
+    m_length (0) {}
 
 bool Bloc::is_last() {
     return m_last;
@@ -18,15 +15,6 @@ void Bloc::read_header() {
     m_last = last != 0;
     m_type = m_inp->read_uint(7);
     m_length = m_inp->read_uint(24);
-}
-
-uint64_t Bloc::read_size(size_t n, bool reverse) {
-    uint64_t size = m_inp->read_uint(n);
-    if (reverse) {
-        return __builtin_bswap32(size);
-    } else {
-        return size;
-    }
 }
 
 void Bloc::read_body() {
@@ -49,9 +37,29 @@ void Bloc::print_info() {
         default: i_type = "reserved";
     }
     std::cout << std::endl;
-    std::cout << "---- [Bloc infos] ----" << std::endl;
-    std::cout << "   - Last   : " << i_last << std::endl;
-    std::cout << "   - Type   : " << i_type << std::endl;
-    std::cout << "   - Length : " << m_length << std::endl;
+    std::cout << "----- [Bloc info] -----" << std::endl;
+    std::cout << "   - Last    : " << i_last << std::endl;
+    std::cout << "   - Type    : " << i_type << std::endl;
+    std::cout << "   - Length  : " << m_length << std::endl;
     std::cout << "-------- [End] --------" << std::endl << std::endl;
+}
+
+uint64_t Bloc::read_size(size_t n, Order reverse) {
+    uint64_t size = m_inp->read_uint(n);
+    if (reverse == Order::LITTLE_ENDIAN_ORDER) {
+        return __builtin_bswap32(size);
+    } else {
+        return size;
+    }
+}
+
+std::string Bloc::read_string(uint64_t length) {
+    std::string buffer = "";
+    char charbuffer = ' ';
+	for (uint64_t i = 0; i < length; ++i) {
+		// Read UTF-8 characters
+		charbuffer = static_cast<char>(this->m_inp->read_uint(8));
+		buffer.push_back(charbuffer);
+	}
+    return buffer;
 }
