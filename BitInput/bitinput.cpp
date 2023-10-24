@@ -33,3 +33,19 @@ uint64_t BitInput::read_uint(size_t n, bool update_state) {
 
 	return result;
 }
+
+int64_t BitInput::read_int(size_t n, bool update_state) {
+	int64_t buffer = this->read_uint(n, update_state);
+	buffer -= ((buffer >> (n - 1)) << n);
+	return buffer;
+}
+
+int64_t BitInput::read_rice_int(size_t n, bool update_state) {
+	int64_t value = 0;
+	while (!this->read_uint(1,update_state)) {
+		value++;
+	}
+	value = (value << n) | this->read_uint(n,update_state);
+	return (value >> 1) ^ -(value & 1);
+	
+}

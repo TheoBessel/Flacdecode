@@ -25,46 +25,81 @@ void Frame::read_header() {
         m_inp->read_uint(48); // TODO : Cast the 48 bits int into a 31 bits utf-8 int
     }
 
-    if (m_blocksize & 0b1110 == 0110) {
+    if ((m_blocksize & 0b1110) == 0110) {
         m_blocksize = m_inp->read_uint(8) + 1;
     }
 
-    if (m_samplerate & 0b1100 == 1100) {
+    if ((m_samplerate & 0b1100) == 1100) {
         m_samplerate = m_inp->read_uint(8);
     }
 
     m_crc8 = m_inp->read_uint(8);
 
-    std::tuple<std::vector<int64_t>, std::vector<int64_t> > subfr = this->read_subframes(); // m_blocksize, m_bitrate, m_channels
+    std::vector<std::vector<int64_t> > subfr = this->read_subframes(); // m_blocksize, m_bitrate, m_channels
 
     std::cout << "Subframe 1 : ";
-    for (size_t i = 0; i < std::get<0>(subfr).size(); i++) {
-        std::cout << std::get<0>(subfr)[i] << " ";
+    for (uint64_t i = 0; i < subfr[0].size(); i++) {
+        std::cout << subfr[0][i] << " ";
     }
     std::cout << std::endl;
     
     std::cout << "Subframe 2 : ";
-    for (size_t i = 0; i < std::get<1>(subfr).size(); i++) {
-        std::cout << std::get<1>(subfr)[i] << " ";
+    for (uint64_t i = 0; i < subfr[1].size(); i++) {
+        std::cout << subfr[1][i] << " ";
     }
     std::cout << std::endl;
 
     this->read_footer();
 }
 
-std::tuple<std::vector<int64_t>, std::vector<int64_t> > Frame::read_subframes() {
-    // Suppose that m_channels == 0b1000
-    std::vector<int64_t> left = read_subframe(); // /!\ signed
-    std::vector<int64_t> right = read_subframe(); // /!\ signed
+std::vector<std::vector<int64_t> > Frame::read_subframes() {
+    std::vector<std::vector<int64_t> > channels;
+    std::vector<int64_t> chan1;
+    std::vector<int64_t> chan2;
+    int64_t side;
+    int64_t right;
 
-    return {left, right};
+    switch (m_channels) {
+        case 0b0000 ... 0b0111:
+            for (uint64_t i = 0; i < m_blocksize; i++) {
+                channels.push_back(read_subframe());
+            } break;
+        case 0b1000 ... 0b1010:
+            chan1 = read_subframe(); // /!\ signed
+            chan2 = read_subframe(); // /!\ signed
+            switch (m_channels) {
+                case 8:
+                    for (uint64_t i = 0; i < m_blocksize; i++) {
+                        chan2[i] = chan1[i] - chan2[i];
+                    } break;
+                case 9:
+                    for (uint64_t i = 0; i < m_blocksize; i++) {
+                        chan2[i] = chan1[i] + chan2[i];
+                    } break;
+                case 10:
+                    for (uint64_t i = 0; i < m_blocksize; i++) {
+                        side = chan2[i];
+                        right = chan1[i] - (side >> 1);
+                        chan2[i] = right;
+                        chan1[i] = right + side;
+                    } break;
+            }
+            channels = {chan1, chan2};
+            break;
+        default:
+            break;
+    }
+
+    return channels;
 }
 
 // TODO : Create a class for subframes
 std::vector<int64_t> Frame::read_subframe() { // /!\ signed
+    std::vector<int64_t> subframe;
     m_inp->read_uint(1);
     uint64_t type = m_inp->read_uint(6);
-    uint64_t shift = m_inp->read_uint(1);
+    
+    uint64_t shift = m_inp->read_uint(1); // To handle "Wasted bit per sample flag"
     if (shift) {
         while (!m_inp->read_uint(1)) {
             shift++;
@@ -74,8 +109,115 @@ std::vector<int64_t> Frame::read_subframe() { // /!\ signed
 
     std::cout << "[TYPE] : " << type << std::endl;
     // TODO : Handle different types
+    switch (type) {
+        case 0b000000: // Constant coding
+            subframe = std::vector<int64_t>(m_blocksize, m_inp->read_int(m_bitrate));
+            break;
+        case 0b000001: // Verbatim coding
+            for (uint64_t i = 0; i < m_blocksize; i++) {
+                subframe.push_back(m_inp->read_int(m_bitrate));
+            } break;
+        case 0b001000 ... 0b001100: // Fixed prediction coding
+            subframe = fixed_prediction(type - 0b001000);
+            break;
+        case 0b100000 ... 0b111111: // Linerar prediction coding
+            subframe = linear_prediction(type - 0b100000 + 1);
+            break;
+        default: // Reserved subframe type
+            std::cerr << "Reserved subframe type" << std::endl;
+            break;
+    }
 
-    return std::vector<int64_t>(10); // Stupid array [0 0 0 0 0 0 0 0 0 0] returned, to change
+    for (uint64_t i = 0; i < subframe.size(); i++) {
+        subframe[i] = subframe[i] << shift;
+    }
+
+    return subframe;
+}
+
+std::vector<int64_t> Frame::fixed_prediction(const uint64_t& prediction_order) {
+    std::vector<int64_t> subframe;
+    for (uint64_t i = 0; i < prediction_order; i++) {
+        subframe.push_back(m_inp->read_int(m_bitrate));
+    }
+    this->compute_residuals(&subframe);
+    this->restore_prediction(&subframe,FIXED_PREDICTION_COEFFICIENTS[0],0);
+    return subframe;
+}
+
+std::vector<int64_t> Frame::linear_prediction(const uint64_t& prediction_order) {
+    std::vector<int64_t> subframe;
+    for (uint64_t i = 0; i < prediction_order; i++) {
+        subframe.push_back(m_inp->read_int(m_bitrate));
+    }
+    uint64_t precision = m_inp->read_uint(4) + 1;
+    int64_t shift = m_inp->read_int(5);
+    std::vector<int64_t> coefficients;
+    for (uint64_t i = 0; i < prediction_order; i++) {
+        coefficients.push_back(m_inp->read_int(precision));
+    }
+    this->compute_residuals(&subframe);
+    this->restore_prediction(&subframe,coefficients,shift);
+    return subframe;
+}
+
+void Frame::compute_residuals(std::vector<int64_t> *subframe) {
+    int64_t count;
+    uint64_t param;
+    uint64_t method = m_inp->read_uint(2);
+    uint64_t bit_param;
+    int64_t escape_param;
+
+    switch (method) {
+        case 0:
+            bit_param = 4;
+            escape_param = 0xF;
+            break;
+        case 1:
+            bit_param = 5;
+            escape_param = 0x1F;
+            break;
+        default:
+            std::cerr << "Reserved residual coding method" << std::endl;
+            break;
+    }
+
+    uint64_t partition_order = m_inp->read_uint(4);
+    uint64_t partition_number = 1 << partition_order;
+
+    if (m_blocksize % partition_number != 0) {
+		std::cerr << "Reserved residual coding method" << std::endl;
+    }
+
+    for (uint64_t i = 0; i < partition_number; i++) {
+        count = m_blocksize >> partition_order;
+        if (i == 0) {
+            count -= subframe->size();
+        }
+        param = m_inp->read_uint(bit_param);
+        if (param < escape_param) {
+            for (int64_t i = 0; i < count; i++) {
+                subframe->push_back(m_inp->read_rice_int(param));
+            }
+        } else {
+            uint64_t bit_number = m_inp->read_uint(5);
+            for (int64_t i = 0; i < count; i++) {
+                subframe->push_back(m_inp->read_int(bit_number));
+            }
+        }
+    }
+}
+
+void Frame::restore_prediction(std::vector<int64_t> *subframe, const std::vector<int64_t>& coefficients, const u_int64_t& shift) {
+    int64_t sum;
+    for (uint64_t i = coefficients.size(); i < subframe->size(); i++) {
+        sum = 0;
+        for (uint64_t j = 0; j < coefficients.size(); j++) {
+            sum += subframe->at(i - 1 - j) * coefficients[j];
+        }
+        subframe->at(i) += (sum >> shift);
+    }
+    
 }
 
 void Frame::read_footer() {
