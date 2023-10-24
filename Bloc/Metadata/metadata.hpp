@@ -4,13 +4,17 @@
 #include "../bloc.hpp"
 
 class MetadataBloc : private Bloc {
-using Bloc::Bloc;
-using Bloc::is_last;
+//using Bloc::Bloc;
 public:
+    MetadataBloc(std::shared_ptr<Bloc> bloc);
     void read_metadata();
     void print_metadata();
     const uint8_t TYPE = 0;
+    using Bloc::is_last;
+    
 private:
+    std::shared_ptr<Bloc> m_parent_bloc;
+
     uint64_t m_samplerate = -1;
 	uint64_t m_numchannels = -1;
 	uint64_t m_sampledepth = -1;

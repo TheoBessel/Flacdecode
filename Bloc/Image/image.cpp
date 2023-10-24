@@ -1,7 +1,16 @@
 #include "image.hpp"
 
+ImageBloc::ImageBloc(std::shared_ptr<Bloc> bloc) {
+	this->m_inp = bloc.get()->get_inp();
+	this->m_last = bloc.get()->is_last();
+	this->m_type = bloc.get()->get_type();
+	this->m_length = bloc.get()->get_length();
+    this->m_parent_bloc = bloc;
+}
+
 void ImageBloc::read_image() {
     this->read_header();
+    this->m_parent_bloc.get()->update_bloc(this->m_last,this->m_type,this->m_length);
     assert(this->m_type == TYPE);
     // Get picture type
     m_picture_type = this->m_inp->read_uint(32);

@@ -13,6 +13,7 @@ add_executable(
     Bloc/Metadata/metadata.cpp
     Bloc/Vorbis/vorbis.cpp
     Bloc/Image/image.cpp
+    Bloc/Padding/padding.cpp
     Frame/frame.cpp
 )
 

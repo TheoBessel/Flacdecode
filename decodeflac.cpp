@@ -12,6 +12,7 @@
 #include "Bloc/Metadata/metadata.hpp"
 #include "Bloc/Vorbis/vorbis.hpp"
 #include "Bloc/Image/image.hpp"
+#include "Bloc/Padding/padding.hpp"
 
 #include "Frame/frame.hpp"
 
@@ -24,32 +25,32 @@ void read_flac(std::ifstream& input) {
 		std::cerr << "Invalid magic string" << std::endl;
 	}
 
-	/**
-	 * TODO : create a constructor for sub_blocs
-	 * 		It must take a shared_ptr<Block> as entry
-	 * 		and initialize the sub_bloc with this bloc.
-	 * 	
-	 * 		See how to chose a sub_bloc class depending
-	 * 		on its type.
-	*/
+	std::shared_ptr<Bloc> bloc = std::make_shared<Bloc>(inp);
+	uint64_t bloc_type;
+	VorbisBloc vorbis = VorbisBloc(bloc);
+	ImageBloc image = ImageBloc(bloc);
+	PaddingBloc padding = PaddingBloc(bloc);
 
-	MetadataBloc metadata = MetadataBloc(inp);
+
+	MetadataBloc metadata = MetadataBloc(bloc);
 	metadata.read_metadata();
 	metadata.print_metadata();
 
-	VorbisBloc vorbis = VorbisBloc(inp);
-	vorbis.read_vorbis();
-	vorbis.print_vorbis();
-
-	ImageBloc image = ImageBloc(inp);
-	image.read_image();
-	image.print_image();
-
-	Bloc padding = Bloc(inp);
-	while (!padding.is_last()) {
-		padding.read_header();
-		padding.print_info();
-		padding.read_body();
+	while (!bloc.get()->is_last()) {
+		bloc_type = bloc.get()->silent_read_type();
+		switch (bloc_type) {
+			case 4:
+				vorbis.read_vorbis();
+				vorbis.print_vorbis();
+				break;
+			case 6:
+				image.read_image();
+				image.print_image();
+				break;
+			default:
+				padding.read_padding();
+				break;
+		}
 	}
 	
 	Frame frame = Frame(inp);

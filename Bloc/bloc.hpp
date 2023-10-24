@@ -8,13 +8,23 @@ enum class Order {BIG_ENDIAN_ORDER, LITTLE_ENDIAN_ORDER};
 
 class Bloc {
 public:
+    Bloc() = default;
     Bloc(std::shared_ptr<BitInput> inp);
-    bool is_last();
     void read_header();
     void read_body();
     void print_info();
     uint64_t read_size(size_t n, Order reverse = Order::BIG_ENDIAN_ORDER);
     std::string read_string(uint64_t length);
+    uint64_t silent_read_type();
+
+    std::shared_ptr<BitInput> get_inp() { return m_inp; }
+    bool is_last() { return m_last; }
+    uint64_t get_type() { return m_type; }
+    u_int64_t get_length() { return m_length; }
+
+public:
+    void update_bloc(bool last, uint64_t type, uint64_t length);
+
 protected: // Only accessible by children
     std::shared_ptr<BitInput> m_inp;
     bool m_last;

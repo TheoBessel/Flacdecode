@@ -6,10 +6,6 @@ Bloc::Bloc(std::shared_ptr<BitInput> inp) :
     m_type (0), 
     m_length (0) {}
 
-bool Bloc::is_last() {
-    return m_last;
-}
-
 void Bloc::read_header() {
     uint64_t last = m_inp->read_uint(1);
     m_last = last != 0;
@@ -62,4 +58,17 @@ std::string Bloc::read_string(uint64_t length) {
 		buffer.push_back(charbuffer);
 	}
     return buffer;
+}
+
+uint64_t Bloc::silent_read_type() {
+    unsigned mask = (1 << 7) - 1;
+    uint64_t buffer = m_inp->read_uint(8, false);
+    uint64_t type = buffer & mask;
+    return type;
+}
+
+void Bloc::update_bloc(bool last, uint64_t type, uint64_t length) {
+    this->m_last = std::move(last);
+    this->m_type = std::move(type);
+    this->m_length = std::move(length);
 }
