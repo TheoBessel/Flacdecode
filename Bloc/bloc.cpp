@@ -61,7 +61,7 @@ std::string Bloc::read_string(const uint64_t& length) {
 }
 
 uint64_t Bloc::silent_read_type() {
-    unsigned mask = (1 << 7) - 1;
+    uint64_t mask = (1 << 7) - 1;
     uint64_t buffer = m_inp->read_uint(8, false);
     uint64_t type = buffer & mask;
     return type;

@@ -10,7 +10,6 @@ Frame::Frame(std::shared_ptr<BitInput> inp) :
     m_crc16 (0) {}
 
 void Frame::read_header() {
-    uint64_t buffer;
     m_sync_code = m_inp->read_uint(14);
     m_inp->read_uint(1);
     m_blocking_strategy = m_inp->read_uint(1);
@@ -20,12 +19,67 @@ void Frame::read_header() {
     m_bitrate = m_inp->read_uint(3);
     m_inp->read_uint(1);
 
+    if (m_blocking_strategy) {
+        m_inp->read_uint(56); // TODO : Cast the 56 bits int into a 36 bits utf-8 int
+    } else {   
+        m_inp->read_uint(48); // TODO : Cast the 48 bits int into a 31 bits utf-8 int
+    }
+
+    if (m_blocksize & 0b1110 == 0110) {
+        m_blocksize = m_inp->read_uint(8) + 1;
+    }
+
+    if (m_samplerate & 0b1100 == 1100) {
+        m_samplerate = m_inp->read_uint(8);
+    }
+
+    m_crc8 = m_inp->read_uint(8);
+
+    std::tuple<std::vector<int64_t>, std::vector<int64_t> > subfr = this->read_subframes(); // m_blocksize, m_bitrate, m_channels
+
+    std::cout << "Subframe 1 : ";
+    for (size_t i = 0; i < std::get<0>(subfr).size(); i++) {
+        std::cout << std::get<0>(subfr)[i] << " ";
+    }
+    std::cout << std::endl;
     
-    /*if (m_blocking_strategy) {
-        m_inp->read_uint(36);
-    } else {
-        m_inp->read_uint(31);
-    }*/
+    std::cout << "Subframe 2 : ";
+    for (size_t i = 0; i < std::get<1>(subfr).size(); i++) {
+        std::cout << std::get<1>(subfr)[i] << " ";
+    }
+    std::cout << std::endl;
+
+    this->read_footer();
+}
+
+std::tuple<std::vector<int64_t>, std::vector<int64_t> > Frame::read_subframes() {
+    // Suppose that m_channels == 0b1000
+    std::vector<int64_t> left = read_subframe(); // /!\ signed
+    std::vector<int64_t> right = read_subframe(); // /!\ signed
+
+    return {left, right};
+}
+
+// TODO : Create a class for subframes
+std::vector<int64_t> Frame::read_subframe() { // /!\ signed
+    m_inp->read_uint(1);
+    uint64_t type = m_inp->read_uint(6);
+    uint64_t shift = m_inp->read_uint(1);
+    if (shift) {
+        while (!m_inp->read_uint(1)) {
+            shift++;
+        }
+    }
+    m_bitrate -= shift;
+
+    std::cout << "[TYPE] : " << type << std::endl;
+    // TODO : Handle different types
+
+    return std::vector<int64_t>(10); // Stupid array [0 0 0 0 0 0 0 0 0 0] returned, to change
+}
+
+void Frame::read_footer() {
+    m_crc16 = m_inp->read_uint(16);
 }
 
 void Frame::print_info() {

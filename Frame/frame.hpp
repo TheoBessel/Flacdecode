@@ -8,10 +8,11 @@ class Frame {
 public:
     Frame(std::shared_ptr<BitInput> inp);
     void read_header();
-    void read_subframes();
+    std::tuple<std::vector<int64_t>, std::vector<int64_t> > read_subframes();
+    std::vector<int64_t> read_subframe();
     void read_footer();
     void print_info();
-    
+
 protected: // Only accessible by children
     std::shared_ptr<BitInput> m_inp;
     uint64_t m_sync_code;
