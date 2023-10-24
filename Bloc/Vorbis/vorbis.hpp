@@ -4,14 +4,13 @@
 #include "../bloc.hpp"
 
 class VorbisBloc : private Bloc {
-//using Bloc::Bloc;
 public:
 	VorbisBloc(std::shared_ptr<Bloc> bloc);
     void read_vorbis();
     void print_vorbis();
     const uint8_t TYPE = 4;
 	using Bloc::is_last;
-	
+
 private:
 	std::shared_ptr<Bloc> m_parent_bloc;
 

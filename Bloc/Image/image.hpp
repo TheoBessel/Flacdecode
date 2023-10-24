@@ -4,14 +4,13 @@
 #include "../bloc.hpp"
 
 class ImageBloc : private Bloc {
-//using Bloc::Bloc;
 public:
 	ImageBloc(std::shared_ptr<Bloc> bloc);
     void read_image();
     void print_image();
     const uint8_t TYPE = 6;
     using Bloc::is_last;
-	
+
 private:
 	std::shared_ptr<Bloc> m_parent_bloc;
 

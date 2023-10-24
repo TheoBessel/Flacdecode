@@ -40,7 +40,7 @@ void Bloc::print_info() {
     std::cout << "-------- [End] --------" << std::endl << std::endl;
 }
 
-uint64_t Bloc::read_size(size_t n, Order reverse) {
+uint64_t Bloc::read_size(const uint64_t& n, Order reverse) {
     uint64_t size = m_inp->read_uint(n);
     if (reverse == Order::LITTLE_ENDIAN_ORDER) {
         return __builtin_bswap32(size);
@@ -49,7 +49,7 @@ uint64_t Bloc::read_size(size_t n, Order reverse) {
     }
 }
 
-std::string Bloc::read_string(uint64_t length) {
+std::string Bloc::read_string(const uint64_t& length) {
     std::string buffer = "";
     char charbuffer = ' ';
 	for (uint64_t i = 0; i < length; ++i) {
@@ -67,8 +67,8 @@ uint64_t Bloc::silent_read_type() {
     return type;
 }
 
-void Bloc::update_bloc(bool last, uint64_t type, uint64_t length) {
-    this->m_last = std::move(last);
-    this->m_type = std::move(type);
-    this->m_length = std::move(length);
+void Bloc::update_bloc(const bool& last, const uint64_t& type, const uint64_t& length) {
+    this->m_last = last;
+    this->m_type = type;
+    this->m_length = length;
 }

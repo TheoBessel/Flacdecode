@@ -31,7 +31,6 @@ void read_flac(std::ifstream& input) {
 	ImageBloc image = ImageBloc(bloc);
 	PaddingBloc padding = PaddingBloc(bloc);
 
-
 	MetadataBloc metadata = MetadataBloc(bloc);
 	metadata.read_metadata();
 	metadata.print_metadata();

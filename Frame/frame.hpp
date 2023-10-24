@@ -11,6 +11,7 @@ public:
     void read_subframes();
     void read_footer();
     void print_info();
+    
 protected: // Only accessible by children
     std::shared_ptr<BitInput> m_inp;
     uint64_t m_sync_code;
