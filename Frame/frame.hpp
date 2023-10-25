@@ -17,13 +17,14 @@ const std::array<std::vector<int64_t>, 5> FIXED_PREDICTION_COEFFICIENTS = {
 
 class Frame {
 public:
-    Frame(std::shared_ptr<BitInput> inp);
+    Frame(std::shared_ptr<BitInput> inp, const uint64_t& bitrate);
     void read_header();
+    void read_frame();
     
     std::vector<std::vector<int64_t> > read_subframes();
-    std::vector<int64_t> read_subframe();
-    std::vector<int64_t> fixed_prediction(const uint64_t& prediction_order);
-    std::vector<int64_t> linear_prediction(const uint64_t& prediction_order);
+    std::vector<int64_t> read_subframe(const uint64_t& bitrate);
+    std::vector<int64_t> fixed_prediction(const uint64_t& prediction_order, const uint64_t& bitrate);
+    std::vector<int64_t> linear_prediction(const uint64_t& prediction_order, const uint64_t& bitrate);
 
     void compute_residuals(std::vector<int64_t> *subframe);
 
@@ -31,6 +32,8 @@ public:
 
     void read_footer();
     void print_info();
+
+    bool is_last() { return (m_inp->read_octet(false) == -3); }
 
 protected: // Only accessible by children
     std::shared_ptr<BitInput> m_inp;

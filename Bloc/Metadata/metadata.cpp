@@ -28,6 +28,7 @@ void MetadataBloc::print_metadata() {
 
 	std::cout << std::endl;
 	std::cout << "Encoding infos :" << std::endl;
+	std::cout << "    - Frame num  : " << (m_numsamples/m_samplerate)*m_numchannels << " frames" << std::endl;
 	std::cout << "    - Sample rate : " << m_samplerate/1000. << "kHz" << std::endl;
 	std::cout << "    - Channels    : " << m_numchannels << " channel(s)" << std::endl;
 	std::cout << "    - Bit rate    : " << m_sampledepth << "-bit" << std::endl;

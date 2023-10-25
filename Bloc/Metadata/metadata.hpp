@@ -10,6 +10,7 @@ public:
     void print_metadata();
     const uint8_t TYPE = 0;
     using Bloc::is_last;
+    uint64_t get_bitrate() { return m_sampledepth; }
 
 private:
     std::shared_ptr<Bloc> m_parent_bloc;

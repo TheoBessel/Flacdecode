@@ -35,6 +35,8 @@ void read_flac(std::ifstream& input) {
 	metadata.read_metadata();
 	metadata.print_metadata();
 
+	uint64_t bitrate = metadata.get_bitrate();
+
 	while (!bloc.get()->is_last()) {
 		bloc_type = bloc.get()->silent_read_type();
 		switch (bloc_type) {
@@ -52,9 +54,18 @@ void read_flac(std::ifstream& input) {
 		}
 	}
 	
-	Frame frame = Frame(inp);
-	frame.read_header();
-	frame.print_info();
+	Frame frame = Frame(inp, bitrate);
+	int i = 0;
+	while (!frame.is_last()) {
+		std::cout << "Frame n" << i << " : " << std::endl;
+		i++;
+		frame.read_header();
+		frame.print_info();
+		frame.read_frame();
+		frame.read_footer();
+	}
+
+	std::cout << std::endl << "[INFO] : The entire Flac file has been read" << std::endl;
 }
 
 int main(int argc, char** argv) {

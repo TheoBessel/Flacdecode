@@ -21,7 +21,7 @@ public:
     std::shared_ptr<BitInput> get_inp() { return m_inp; }
     bool is_last() { return m_last; }
     uint64_t get_type() { return m_type; }
-    u_int64_t get_length() { return m_length; }
+    uint64_t get_length() { return m_length; }
 
 protected: // Only accessible by children
     std::shared_ptr<BitInput> m_inp;

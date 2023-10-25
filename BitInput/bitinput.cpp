@@ -33,6 +33,19 @@ uint64_t BitInput::read_uint(size_t n, bool update_state) {
 
 	return result;
 }
+	
+int64_t BitInput::read_octet(bool update_state) {
+	if (m_bufferlen >= 8) {
+        return static_cast<int64_t>(read_uint(8));
+    } else {
+        char result;
+        m_input.read(&result, 1);
+        if (m_input.eof()) {
+            return -3;
+        }
+        return static_cast<int64_t>(result);
+    }
+}
 
 int64_t BitInput::read_int(size_t n, bool update_state) {
 	int64_t buffer = this->read_uint(n, update_state);
